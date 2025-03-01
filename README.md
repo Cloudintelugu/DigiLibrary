@@ -1,9 +1,3 @@
-Databasesetup
-********************************************
-https://dev.mysql.com/downloads/installer/
-
-open workbench and run the below commands:
-***********************************************
 CREATE Database ccituserdb;
 
 USE ccituserdb;
@@ -17,11 +11,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-****************DB part compelted***********************
-
-
 Install pyhon and related packages
-*************************************
 
 
 https://www.python.org/downloads/
@@ -30,10 +20,15 @@ pip install flask
 pip install pymysql
 pip install bcrypt
 pip install python-dotenv
-pip install boto3
-pip install requests
 
-**********************Python part compelted***********************
-python app.py
+
+
+Databasesetup
+********************************************
+https://dev.mysql.com/downloads/workbench/
+https://dev.mysql.com/downloads/installer/
+
+********************************************
+
 
 netsh advfirewall firewall add rule name="Flask 5000" dir=in action=allow protocol=TCP localport=5000

@@ -1,9 +1,10 @@
 from flask import Flask, request, render_template, redirect, session, url_for, flash
-import pymysql
 import os
-import bcrypt
+import requests
+import boto3
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
+from botocore.exceptions import NoCredentialsError
 
 # Load environment variables from appsettings.env
 load_dotenv("appsettings.env")
@@ -11,113 +12,125 @@ load_dotenv("appsettings.env")
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'your_default_secret_key')
 
-# MySQL configuration
-db_host = os.getenv('DB_HOST_Local')
-db_user = os.getenv('DB_USER_Local')
-db_password = os.getenv('DB_PASSWORD_Local')
-db_name = os.getenv('DB_NAME_Local')
+# API Gateway Endpoints
+API_SIGNUP_URL = "https://jp7satmpx0.execute-api.ap-south-2.amazonaws.com/Dev/DigiLib"
+API_SIGNIN_URL = "https://jp7satmpx0.execute-api.ap-south-2.amazonaws.com/Dev/DilibSignin"
 
-# Initialize MySQL connection with error handling
-try:
-    db = pymysql.connect(host=db_host, user=db_user, password=db_password, database=db_name)
-except pymysql.MySQLError as e:
-    print(f"Error connecting to the database: {e}")
-    exit(1)  # Exit if database connection fails
+# S3 Configuration
+S3_BUCKET = os.getenv('S3_Bucket_Name')
+S3_REGION = os.getenv('AWS_Region')
 
-# Folder to store uploads
-UPLOAD_FOLDER = os.path.join(app.root_path, 'static/uploads/')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# Initialize S3 Client
+s3 = boto3.client('s3')
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
-# Helper function to check file extension
 def allowed_file(filename):
+    """Check if file extension is allowed."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def upload_to_s3(file, filename):
+    """Upload file to S3 and return the public URL."""
+    try:
+        s3.upload_fileobj(
+            file,
+            S3_BUCKET,
+            filename,
+            ExtraArgs={"ACL": "public-read", "ContentType": file.content_type}
+        )
+        return f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{filename}"
+    except NoCredentialsError:
+        flash("AWS credentials not available.")
+        return None
+    except Exception as e:
+        flash(f"S3 Upload Error: {str(e)}")
+        return None
 
 @app.route('/')
 def index():
-    session.clear()  # Clear session data
+    """Render the login/signup page and clear session."""
+    session.clear()
     return render_template('index.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    """Handle user signup."""
     if request.method == 'POST':
         name = request.form['name']
         email = request.form['email']
-        password = request.form['password'].encode('utf-8')
-        hashed_password = bcrypt.hashpw(password, bcrypt.gensalt()).decode('utf-8')
+        password = request.form['password']
         image = request.files['image']
 
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
-        existing_user = cursor.fetchone()
-
-        if existing_user:
-            cursor.close()
-            return redirect(url_for('index') + '?error=exists')  # Redirect with error
-
+        # Upload image to S3
+        image_url = None
         if image and allowed_file(image.filename):
             filename = secure_filename(image.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-            image.save(file_path)
-            relative_path = "uploads/{}".format(filename)
+            image_url = upload_to_s3(image, filename)
 
-            try:
-                cursor.execute(
-                    "INSERT INTO users (name, email, password, image_url) VALUES (%s, %s, %s, %s)",
-                    (name, email, hashed_password, relative_path)
-                )
-                db.commit()
-                session['username'] = name
-                session['email'] = email
-                session['image_url'] = relative_path
-                cursor.close()
-                flash("Signup successful!")
-                return redirect(url_for('welcome'))
+        # Call API Gateway (Lambda) for user signup
+        payload = {
+            "Fullname": name,
+            "EmailId": email,
+            "Password": password,
+            "userimage": image_url
+        }
+        response = requests.get(API_SIGNUP_URL, params=payload)
 
-            except Exception as e:
-                db.rollback()
-                flash(f"An error occurred during signup: {e}")
-                return redirect(url_for('index') + '?error=signup_failed')
+        if response.status_code == 200:
+            session['username'] = name
+            session['email'] = email
+            session['image_url'] = image_url
+            flash("Signup successful!")
+            return redirect(url_for('welcome'))
+        else:
+            flash("Signup failed! Try again.")
 
     return render_template('index.html')
 
 @app.route('/signin', methods=['GET', 'POST'])
 def signin():
+    """Handle user signin."""
     if request.method == 'POST':
         email = request.form['email']
-        password = request.form['password'].encode('utf-8')
-        cursor = db.cursor()
-        cursor.execute("SELECT password, name, email, image_url FROM users WHERE email = %s", (email,))
-        result = cursor.fetchone()
-        cursor.close()
+        password = request.form['password']
 
-        if result:
-            stored_password = result[0].encode('utf-8')
-            if bcrypt.checkpw(password, stored_password):
-                session['username'] = result[1]
-                session['email'] = result[2]
-                session['image_url'] = result[3]
-                return redirect(url_for('welcome'))
+        # Call API Gateway (Lambda) for user signin
+        payload = {"EmailId": email, "Password": password}
+        response = requests.get(API_SIGNIN_URL, params=payload)
+
+        print("API Response:", response.text)  # Debugging
+
+        if response.status_code == 200:
+            data = response.json()
+            session['username'] = data.get('Fullname')
+            session['email'] = email
+            
+            # Ensure 'userimage' is not None or "None"
+            image_url = data.get('userimage')
+            session['image_url'] =  data.get('userimage')
+            
+            return redirect(url_for('welcome'))
 
         flash("Invalid Credentials!")
-    
+
     return render_template('index.html')
+
+
 
 @app.route('/welcome')
 def welcome():
+    """Render the welcome page after login."""
     if 'username' not in session:
         return redirect(url_for('index'))
-    
-    image_url = url_for('static', filename=session['image_url'])
-    return render_template('welcome.html', username=session['username'], email=session['email'], image_url=image_url)
+
+    return render_template('welcome.html', username=session['username'], email=session['email'], image_url=session['image_url'])
 
 @app.route('/logout')
 def logout():
+    """Clear session and redirect to index."""
     session.clear()
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.debug = True  # Enable debug mode for development
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     app.run(host='0.0.0.0', port=5000)
