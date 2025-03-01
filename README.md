@@ -1,6 +1,5 @@
 Databasesetup
 ********************************************
-https://dev.mysql.com/downloads/workbench/
 https://dev.mysql.com/downloads/installer/
 
 open workbench and run the below commands:
