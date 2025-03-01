@@ -31,6 +31,7 @@ pip install pymysql
 pip install bcrypt
 pip install python-dotenv
 pip install boto3
+pip install requests
 
 **********************Python part compelted***********************
 python app.py
