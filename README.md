@@ -20,12 +20,11 @@ pip install flask
 pip install pymysql
 pip install bcrypt
 pip install python-dotenv
-
+pip install boto3
 
 
 Databasesetup
 ********************************************
-https://dev.mysql.com/downloads/workbench/
 https://dev.mysql.com/downloads/installer/
 
 ********************************************
