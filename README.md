@@ -13,7 +13,7 @@ Install Python and related packages
 *****************************************
 https://www.python.org/downloads/
 
-pip install flask
+pip install flask git
 pip install pymysql
 pip install bcrypt
 pip install python-dotenv
