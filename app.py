@@ -19,10 +19,18 @@ API_SIGNIN_URL = "https://jp7satmpx0.execute-api.ap-south-2.amazonaws.com/Dev/Di
 # S3 Configuration
 S3_BUCKET = os.getenv('S3_Bucket_Name')
 S3_REGION = os.getenv('AWS_Region')
+#AWS_ACCESS_KEY_ID=os.getenv('AWS_KEY_ID')
+#AWS_SECRET_ACCESS_KEY=os.getenv('AWS_SEC_KEY_ID')
+#AWS_REGION=os.getenv('AWS_Region')
 
 # Initialize S3 Client
-s3 = boto3.client('s3')
-
+s3 = boto3.client('s3',region_name=S3_REGION)
+#*s3 = boto3.client(
+ #   's3',
+ #   aws_access_key_id=AWS_ACCESS_KEY_ID,
+ #   aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+ #   region_name=S3_REGION
+#)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
