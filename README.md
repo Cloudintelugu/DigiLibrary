@@ -9,7 +9,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-Install Pyhon and related packages
+Install Python and related packages
 *****************************************
 https://www.python.org/downloads/
 
