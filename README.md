@@ -1,7 +1,5 @@
 CREATE Database ccituserdb;
-
 USE ccituserdb;
-
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
@@ -11,9 +9,8 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-Install pyhon and related packages
-
-
+Install Pyhon and related packages
+*****************************************
 https://www.python.org/downloads/
 
 pip install flask
@@ -23,10 +20,9 @@ pip install python-dotenv
 pip install boto3
 
 
-Databasesetup
+Database setup
 ********************************************
 https://dev.mysql.com/downloads/installer/
-
 ********************************************
 
 
