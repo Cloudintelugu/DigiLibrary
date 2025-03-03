@@ -18,12 +18,12 @@ Install Python and related packages
 https://www.python.org/downloads/
 (use pip3 command for the Linux instances)
 yum install -y git python3 python3-pip
-pip install flask git
-pip install pymysql
-pip install bcrypt
-pip install python-dotenv
-pip install boto3
-pip install requests
+pip3 install flask git
+pip3 install pymysql
+pip3 install bcrypt
+pip3 install python-dotenv
+pip3 install boto3
+pip3 install requests
 
 Database setup
 ********************************************
