@@ -16,7 +16,8 @@ CREATE TABLE users (
 Install Python and related packages
 *****************************************
 https://www.python.org/downloads/
-
+(use pip3 command for the Linux instances)
+yum install -y git python3 python3-pip
 pip install flask git
 pip install pymysql
 pip install bcrypt
