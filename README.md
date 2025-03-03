@@ -1,3 +1,7 @@
+Install MySQL for local DB settings:
+**********************************************
+https://dev.mysql.com/downloads/installer/
+
 CREATE Database ccituserdb;
 USE ccituserdb;
 CREATE TABLE users (
