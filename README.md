@@ -25,6 +25,11 @@ pip3 install python-dotenv
 pip3 install boto3
 pip3 install requests
 
+(optional)
+pip install gunicorn
+gunicorn --bind 0.0.0.0:5000 app:app --daemon
+
+
 Database setup
 ********************************************
 https://dev.mysql.com/downloads/installer/
